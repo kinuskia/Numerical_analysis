@@ -39,6 +39,12 @@ public:
 	, converged_(false)
 	{}
 
+	// Reset LM object
+	void clear()
+	{
+		converged_ = false;
+	}
+
 	// Approximation of partial derivative of f(x,q) with respect to a parameter at position x 
 	number_type first_derivative(number_type x, const Vector<number_type> & q, size_type parameter_index, number_type stepsize)
 	{
@@ -49,6 +55,14 @@ public:
 		Vector<number_type> position_backward = q;
 		position_backward[parameter_index] -= stepsize;
 		return (model_.f(x, position_forward)-model_.f(x, position_backward))/2.0/stepsize;
+	}
+
+	// unbiased estimator of first derivative: weighted sum of evaluations with two different step sizes
+	number_type first_derivative_unbiased(number_type x, const Vector<number_type> & q, size_type parameter_index, number_type stepsize)
+	{
+		number_type value_h = first_derivative(x, q, parameter_index, stepsize);
+		number_type value_h2 = first_derivative(x, q, parameter_index, stepsize/2);
+		return (4.*value_h2-value_h)/3.;
 	}
 
 	// Getter for jacobian
@@ -73,7 +87,7 @@ public:
 		{
 			for (size_type j = 0; j < n_param_; ++j)
 			{
-				J_(i, j) = first_derivative(x_[i], q, j, 1e-3);
+				J_(i, j) = first_derivative_unbiased(x_[i], q, j, 1e-3);
 			}
 		}
 	}
@@ -185,6 +199,8 @@ public:
 	// solve curve-fitting problem
 	void solve(Vector<number_type> & q)
 	{
+		// reinitialize LM object
+		clear();
 		// right-hand side / residual
 		Vector<number_type> r(n_param_);
 		// left-hand side

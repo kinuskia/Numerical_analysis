@@ -5,6 +5,7 @@
 #include "../auxiliary_files/matrix.hpp"
 #include "model.hpp" // load before lm.hpp !!
 #include "../auxiliary_files/lm.hpp"
+#include <iomanip>
 
 
 
@@ -28,12 +29,27 @@ int main ()
 	// Set up Levenberg-Marquardt solver
 	LM<number_type> minimizer(gaussian, x, y, dy);
 
+	// lower and upper bounds for search region
+	Vector<number_type> range_min(gaussian.n_parameters());
+	Vector<number_type> range_max(gaussian.n_parameters());
+	range_min[0] = 5;
+	range_max[0] = 7;
+	range_min[1] = 3;
+	range_max[1] = 5;
+	range_min[2] = 0.1;
+	range_max[2] = 2;
+
 	// Set up initial guess
 	Vector<number_type> popt(gaussian.n_parameters());
-	popt[0] = 6;
-	popt[1] = 1.0001;
-	popt[2] = 0.8;
-	minimizer.solve(popt);
+
+
+	
+	for (size_type i = 0; i < 1e3; ++i)
+	{
+		fill_from_region(popt, range_min, range_max);
+		minimizer.solve(popt);
+		std::cout << minimizer.chi2_red(popt) << "\n";
+	}
 
 	if (!minimizer.converged())
 	{
@@ -46,6 +62,11 @@ int main ()
 	std::cout << "chi2/d.o.f = " << minimizer.chi2_red(popt) << "\n";
 
 
+	fill_from_region(popt, range_min, range_max);
+	std::cout << std::setprecision(14) << minimizer.first_derivative_unbiased(2, popt, 2, 1e-1) << "\n";
+	std::cout << std::setprecision(14) << minimizer.first_derivative(2, popt, 2, 1e-1) << "\n";
+	std::cout << std::setprecision(14) << minimizer.first_derivative_unbiased(2, popt, 2, 1e-3) << "\n";
+	std::cout << std::setprecision(14) << minimizer.first_derivative(2, popt, 2, 1e-3) << "\n";
 
 
 
