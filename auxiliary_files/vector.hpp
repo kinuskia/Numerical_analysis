@@ -210,6 +210,19 @@ public:
 		return result;
 	}
 
+/* Inner product of two vectors */
+	template<typename REAL>
+	REAL inner_product(const Vector<REAL> & x, const Vector<REAL> & y)
+	{
+		assert(x.size() == y.size());
+		REAL result(0);
+		for (std::size_t i = 0; i < x.size(); ++i)
+		{
+			result += x[i]*y[i];
+		}
+		return result;
+	}
+
 /* Division from the right hand side by scalar */
 	template<typename REAL1, typename REAL2>
 	Vector<REAL1> operator/ (const Vector<REAL1> & x, const REAL2 & alpha)

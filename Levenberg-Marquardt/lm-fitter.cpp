@@ -32,8 +32,8 @@ int main ()
 	Vector<number_type> popt(gaussian.n_parameters());
 	popt[0] = 6;
 	popt[1] = 4;
-	popt[2] = 0.78;
-	minimizer.set_J(popt);
+	popt[2] = 0.8;
+	minimizer.solve(popt);
 
 	std::cout << minimizer.J(2, 1) << "\n";
 
