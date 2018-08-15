@@ -257,6 +257,16 @@ public:
 		}
 	}
 
+/* Component-wise absolute value */
+	template<typename REAL>
+	void abs(Vector<REAL> & x)
+	{
+		for (std::size_t i = 0; i < x.size(); ++i)
+		{
+			x[i] = abs(x[i]);
+		}
+	}
+
 /* Fill vector with random entries following a probability distribution */
 	template<typename REAL, typename Distribution>
 	void fill_random(Vector<REAL> & vec, Distribution distribution)

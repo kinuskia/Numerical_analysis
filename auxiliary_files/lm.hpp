@@ -28,15 +28,15 @@ public:
 	, J_(x.size(), model.n_parameters(), 0)
 	, n_param_(model.n_parameters())
 	, n_data_(x.size())
+	, d_of_freedom_(x.size()-model.n_parameters())
 	, maxit_(10*model.n_parameters()+10)
-	, maxit_lambda_(10)
 	, lambda0_(1.e-2)
 	, scale_up_(11.)
 	, scale_down_(9.)
-	, limit_gradient_(1.e-3)
-	, limit_param_(1.e-3)
-	, limit_chi2_(1.e-1)
+	, limit_gradient_(1.e-12)
+	, limit_param_(1.e-12)
 	, eps_lm_(1.e-1)
+	, converged_(false)
 	{}
 
 	// Approximation of partial derivative of f(x,q) with respect to a parameter at position x 
@@ -57,6 +57,12 @@ public:
 		assert(row_index < n_data_ && row_index >= 0);
 		assert(column_index < n_param_ && column_index >= 0);
 		return J_(row_index, column_index);
+	}
+
+	// Getter for convergence boolean
+	bool converged() const
+	{
+		return converged_;
 	}
 
 	// compute Jacobian for set of parameter values q
@@ -116,6 +122,7 @@ public:
 		}
 	}
 
+	// compute current chi2 value
 	number_type chi2(const Vector<number_type> & q)
 	{
 		number_type result = 0;
@@ -127,6 +134,13 @@ public:
 		return result;
 	}
 
+	// compute reduced chi2
+	number_type chi2_red(const Vector<number_type> & q)
+	{
+		return chi2(q)/d_of_freedom_;
+	}
+
+	// measure for how lambda is to be changed
 	number_type check_improvement(const Vector<number_type> & q, const Vector<number_type> & h, number_type lambda, const Vector<number_type> & diagonals, const Vector<number_type> & residual)
 	{
 		number_type result(0.);
@@ -139,6 +153,33 @@ public:
 
 
 		return result;
+	}
+
+	bool has_converged (const Vector<number_type> & q, const Vector<number_type> & h, const Vector<number_type> & residual)
+	{
+		bool result = false;
+
+		// convergence in the gradient?
+		Vector<number_type> r_abs(residual.size());
+		r_abs = residual;
+		abs(r_abs);
+		if(*std::max_element(r_abs.begin(), r_abs.end()) < limit_gradient_)
+		{
+			result = true;
+			return result;
+		}
+
+		// convergence in parameters?
+		Vector<number_type> h_scaled(h.size());
+		h_scaled = h/q;
+		if(*std::max_element(h_scaled.begin(), h_scaled.end()) < limit_param_)
+		{
+			result = true;
+			return result;
+		}
+
+		return result;
+
 	}
 
 	// solve curve-fitting problem
@@ -161,11 +202,11 @@ public:
 		// Levenberg-Marquardt parameter
 		number_type lambda = lambda0_;
 
+		// Compute Jacobian at the beginning
+		set_J(q);
+
 		for (size_type i = 0; i < maxit_; ++i)
 		{
-				std::cout << "Iteration: " << i  << ", chi2: " << chi2(q) << "\n";
-				// Compute jacobian
-				set_J(q); 
 				// Fill entries of coefficient matrix and save diagonal entries of JtWJ
 				Vector<number_type> diagonals(n_param_);
 				fill_left(A, q, lambda, diagonals);
@@ -196,6 +237,18 @@ public:
 				{
 					lambda = std::min(lambda*scale_up_, 1e7);
 				}
+
+				// Recomputing jacobian
+				set_J(q); 
+
+
+				// check convergence
+				if (has_converged(q, z, r_copy))
+				{
+					converged_ = true;
+					break;
+				}
+
 		}
 
 	}
@@ -213,10 +266,10 @@ private:
 	// useful constants
 	size_type n_param_;
 	size_type n_data_;
+	size_type d_of_freedom_;
 
 	// parameters specific to Levenberg-Marquardt algorithm
 	size_type maxit_;
-	size_type maxit_lambda_;
 	number_type lambda0_;
 	number_type scale_up_;
 	number_type scale_down_;
@@ -224,8 +277,8 @@ private:
 	// convergence criteria
 	number_type limit_gradient_;
 	number_type limit_param_;
-	number_type limit_chi2_;
 	number_type eps_lm_;
+	bool converged_;
 
 
 

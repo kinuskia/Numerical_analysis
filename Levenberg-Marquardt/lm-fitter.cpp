@@ -31,11 +31,19 @@ int main ()
 	// Set up initial guess
 	Vector<number_type> popt(gaussian.n_parameters());
 	popt[0] = 6;
-	popt[1] = 4;
+	popt[1] = 1.0001;
 	popt[2] = 0.8;
 	minimizer.solve(popt);
 
-	std::cout << minimizer.J(2, 1) << "\n";
+	if (!minimizer.converged())
+	{
+		std::cout << "No convergence!\n";
+	}
+	for (size_type i = 0; i < popt.size(); ++i)
+	{
+		std::cout << i << " : " << popt[i] << "\n";
+	}
+	std::cout << "chi2/d.o.f = " << minimizer.chi2_red(popt) << "\n";
 
 
 
