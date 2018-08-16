@@ -80,7 +80,7 @@ public:
 	}
 
 	// compute Jacobian for set of parameter values q
-	void set_J(const Vector<number_type> q)
+	void set_J(const Vector<number_type> & q)
 	{
 		assert(q.size() == n_param_);
 		for (size_type i = 0; i < n_data_; ++i)

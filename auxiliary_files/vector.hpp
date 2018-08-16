@@ -295,7 +295,7 @@ public:
 
 /* Fill vector with random entries from a specific region */
 	template<typename REAL>
-	void fill_from_region(Vector<REAL> &vec, Vector<REAL> region_min, Vector<REAL> region_max)
+	void fill_from_region(Vector<REAL> &vec, const Vector<REAL> & region_min, const Vector<REAL> & region_max)
 	{
 		assert(vec.size() == region_min.size() && vec.size() == region_max.size());
 		std::random_device rd;
