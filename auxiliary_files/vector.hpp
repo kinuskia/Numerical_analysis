@@ -289,8 +289,8 @@ public:
 		std::mt19937 gen(rd());
 		for (std::size_t i = 0; i < vec.size(); ++i)
 		{
-			//std::uniform_real_distribution<> dis(region_min[i], region_max[i]);
-			std::normal_distribution<> dis(0.5*(region_min[i]+region_max[i]), (region_max[i]-region_min[i])/3.);
+			std::uniform_real_distribution<> dis(region_min[i], region_max[i]);
+			//std::normal_distribution<> dis(0.5*(region_min[i]+region_max[i]), (region_max[i]-region_min[i])/3.);
 			vec[i] = dis(gen);
 		}
 
