@@ -87,7 +87,7 @@ public:
 		{
 			for (size_type j = 0; j < n_param_; ++j)
 			{
-				J_(i, j) = first_derivative_unbiased(x_[i], q, j, 1e-3);
+				J_(i, j) = first_derivative_unbiased(x_[i], q, j, 1e-5);
 			}
 		}
 	}
@@ -218,11 +218,19 @@ public:
 		// Levenberg-Marquardt parameter
 		number_type lambda = lambda0_;
 
+		bool non_invertible = false; // boolean for whether coefficient matrix is non-invertible
+
 		// Compute Jacobian at the beginning
 		set_J(q);
 
 		for (size_type i = 0; i < maxit_; ++i)
 		{
+				// for (size_type i = 0; i < q.size(); ++i)
+				// {
+				// 	std::cout << i << " : " << q[i] << "\n";
+				// }
+				// std::cout << "chi2/d.o.f = " << chi2_red(q) << "\n";
+				// std::cout << non_invertible << "\n";
 				// Fill entries of coefficient matrix and save diagonal entries of JtWJ
 				Vector<number_type> diagonals(n_param_);
 				fill_left(A, q, lambda, diagonals);
@@ -232,7 +240,12 @@ public:
 				Vector<number_type> r_copy(r);
 
 				// solve system for update
-				row_equilibrate(A, s); // equilibrate rows
+				row_equilibrate(A, s, non_invertible); // equilibrate rows
+				if (non_invertible) // break in case of a non-invertible matrix
+				{
+					converged_ = false;
+					break;
+				}
 				lu_fullpivot(A, perm_r, perm_c); // LU decomposition of A
 				z = number_type(0.0); // clear solution
 				apply_equilibrate(s, r); // equilibration of right-hand side

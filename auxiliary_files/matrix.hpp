@@ -388,9 +388,10 @@ void permute_backward (const Vector<size_type> & q, Vector<T> & z)
 	}
 }
 
-// perform a row equilibration of a matrix; return scaling for later use
+// perform a row equilibration of a matrix; return scaling for later use.
+// if matrix is non-invertible, it is saved in-place
 template <class T>
-void row_equilibrate (Matrix<T> & A, Vector<T> & s)
+void row_equilibrate (Matrix<T> & A, Vector<T> & s, bool & non_invertible)
 {
 	typedef T number_type;
 	assert(A.rowsize() != 0 && A.colsize() != 0); // nonempty matrix
@@ -404,11 +405,17 @@ void row_equilibrate (Matrix<T> & A, Vector<T> & s)
 		{
 			s[k] += abs(A[k][j]);
 		}
-		assert(s[k] != 0); // nonzero row sum
-
-		for (size_type j = 0; j < A.colsize(); ++j)
+		if (s[k] == 0) // matrix non-invertible if row sum zero
 		{
-			A[k][j] /= s[k];
+			non_invertible = true;
+		}
+		//assert(s[k] != 0); // nonzero row sum
+		else
+		{
+			for (size_type j = 0; j < A.colsize(); ++j)
+			{
+				A[k][j] /= s[k];
+			}
 		}
 	}
 }

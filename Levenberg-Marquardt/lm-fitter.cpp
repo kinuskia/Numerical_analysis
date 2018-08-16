@@ -42,31 +42,51 @@ int main ()
 	// Set up initial guess
 	Vector<number_type> popt(gaussian.n_parameters());
 
+	// popt[0] = 5.56108;
+	// popt[1] = 5.84062;
+	// popt[2] = 0.0538888;
+	// minimizer.solve(popt);
+	// if (!minimizer.converged())
+	// {
+	// 	std::cout << "No convergence!\n";
+	// }
+	// for (size_type i = 0; i < popt.size(); ++i)
+	// {
+	// 	std::cout << i << " : " << popt[i] << "\n";
+	// }
+	// std::cout << "chi2/d.o.f = " << minimizer.chi2_red(popt) << "\n";
+
+
+
 
 	
 	for (size_type i = 0; i < 1e3; ++i)
 	{
 		fill_from_region(popt, range_min, range_max);
+		Vector<number_type> popt_copy = popt;
 		minimizer.solve(popt);
-		std::cout << minimizer.chi2_red(popt) << "\n";
+		if (!minimizer.converged())
+		{
+			std::cout << minimizer.chi2_red(popt) << "\n";
+			for (size_type i = 0; i < popt.size(); ++i)
+			{
+				std::cout << i << " : " << popt_copy[i] << "\n";
+			}
+		}
 	}
 
-	if (!minimizer.converged())
-	{
-		std::cout << "No convergence!\n";
-	}
-	for (size_type i = 0; i < popt.size(); ++i)
-	{
-		std::cout << i << " : " << popt[i] << "\n";
-	}
-	std::cout << "chi2/d.o.f = " << minimizer.chi2_red(popt) << "\n";
+	// if (!minimizer.converged())
+	// {
+	// 	std::cout << "No convergence!\n";
+	// }
+	// for (size_type i = 0; i < popt.size(); ++i)
+	// {
+	// 	std::cout << i << " : " << popt[i] << "\n";
+	// }
+	// std::cout << "chi2/d.o.f = " << minimizer.chi2_red(popt) << "\n";
 
 
-	fill_from_region(popt, range_min, range_max);
-	std::cout << std::setprecision(14) << minimizer.first_derivative_unbiased(2, popt, 2, 1e-1) << "\n";
-	std::cout << std::setprecision(14) << minimizer.first_derivative(2, popt, 2, 1e-1) << "\n";
-	std::cout << std::setprecision(14) << minimizer.first_derivative_unbiased(2, popt, 2, 1e-3) << "\n";
-	std::cout << std::setprecision(14) << minimizer.first_derivative(2, popt, 2, 1e-3) << "\n";
+	
 
 
 
