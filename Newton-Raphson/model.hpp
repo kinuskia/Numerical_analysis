@@ -2,7 +2,7 @@
 #define MODEL_HPP
 #include <cmath>
 #include <assert.h>
-#include "../auxiliary_files/vector.hpp"
+
 
 template<typename REAL>
 class Model

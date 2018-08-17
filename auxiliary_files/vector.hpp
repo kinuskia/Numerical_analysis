@@ -293,6 +293,20 @@ public:
 
 	}
 
+	/* Fill vector with gaussian random entries of mean vector und uncertainty vector */
+	template<typename REAL>
+	void fill_gaussian(Vector<REAL> & vec, const Vector<REAL> & mu, const Vector<REAL> & sigma)
+	{
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		for (std::size_t i = 0; i < vec.size(); ++i)
+		{
+			std::normal_distribution<> normal(mu[i], sigma[i]);
+			vec[i] = normal(gen);
+		}
+
+	}
+
 /* Fill vector with random entries from a specific region */
 	template<typename REAL>
 	void fill_from_region(Vector<REAL> &vec, const Vector<REAL> & region_min, const Vector<REAL> & region_max)
