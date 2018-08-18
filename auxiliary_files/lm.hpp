@@ -17,18 +17,19 @@ public:
 	// Default constructor
 	LM(
 	Model<number_type> model,
-	Vector<number_type> x,
+	std::vector<Vector<number_type>> x,
 	Vector<number_type> y,
 	Vector<number_type> dy
 	)
 	: model_(model)
-	, x_(x)
+	, x_transposed_(x)
+	, x_(x[0].size())
 	, y_(y)
 	, dy_(dy)
-	, J_(x.size(), model.n_parameters(), 0)
+	, J_(x[0].size(), model.n_parameters(), 0)
 	, n_param_(model.n_parameters())
-	, n_data_(x.size())
-	, d_of_freedom_(x.size()-model.n_parameters())
+	, n_data_(x[0].size())
+	, d_of_freedom_(x[0].size()-model.n_parameters())
 	, maxit_(10*model.n_parameters()+10)
 	, lambda0_(1.e-2)
 	, scale_up_(11.)
@@ -37,7 +38,9 @@ public:
 	, limit_param_(1.e-12)
 	, eps_lm_(1.e-1)
 	, converged_(false)
-	{}
+	{
+		transpose_x_data();
+	}
 
 	// Reset LM object
 	void clear()
@@ -45,8 +48,43 @@ public:
 		converged_ = false;
 	}
 
+	/* 
+	Experimental x-data is read in and saved in a vector x_transposed of the form:
+			x1	y1	z1
+			x2,	y2,	z2
+			x3	y3	z3
+			etc.
+	However, we need the following form:
+			x1	x2	x3	
+			y1,	y2,	y3	etc.
+			z1	z2	z3
+
+	*/
+	void transpose_x_data()
+	{
+		for (size_type i = 0; i < x_.size(); ++i)
+		{
+			for (size_type j = 0; j < x_transposed_.size(); ++j)
+			{
+				(x_[i]).push_back((x_transposed_[j])[i]);
+			}
+		}
+	}
+
+	void print_x_data() const
+	{
+		for (size_type i = 0; i < x_.size(); ++i)
+		{
+			for (size_type j = 0; j < x_[0].size(); ++j)
+			{
+				std::cout << (x_[i])[j] << " ";
+			}
+			std::cout << "\n";
+		}
+	}
+
 	// Approximation of partial derivative of f(x,q) with respect to a parameter at position x 
-	number_type first_derivative(number_type x, const Vector<number_type> & q, size_type parameter_index, number_type stepsize)
+	number_type first_derivative(Vector<number_type> x, const Vector<number_type> & q, size_type parameter_index, number_type stepsize)
 	{
 		assert(q.size()==n_param_);
 		assert(parameter_index >= 0 && parameter_index < q.size());
@@ -58,7 +96,7 @@ public:
 	}
 
 	// unbiased estimator of first derivative: weighted sum of evaluations with two different step sizes
-	number_type first_derivative_unbiased(number_type x, const Vector<number_type> & q, size_type parameter_index, number_type stepsize)
+	number_type first_derivative_unbiased(Vector<number_type> x, const Vector<number_type> & q, size_type parameter_index, number_type stepsize)
 	{
 		number_type value_h = first_derivative(x, q, parameter_index, stepsize);
 		number_type value_h2 = first_derivative(x, q, parameter_index, stepsize/2);
@@ -285,7 +323,8 @@ public:
 private:
 	// theory model and experimental data
 	Model<number_type> model_;
-	Vector<number_type> x_;
+	std::vector<Vector<number_type>> x_transposed_;
+	std::vector<Vector<number_type>> x_;
 	Vector<number_type> y_;
 	Vector<number_type> dy_;
 

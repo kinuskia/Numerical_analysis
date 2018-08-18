@@ -8,22 +8,21 @@ typedef std::size_t size_type;
 /* free functions to read in a data file and save it in a vector */
 
 template<typename number_type>
-void insert(number_type number, size_type counter, Vector<number_type> &x_data, Vector<number_type> &y_data, Vector<number_type> &dy_data)
+void insert(number_type number, size_type counter, std::vector<Vector<number_type>> & data)
 {
-	if (counter%3 == 0)
-		x_data.push_back(number);
-	if (counter%3 == 1)
-		y_data.push_back(number);
-	if (counter%3 == 2)
-		dy_data.push_back(number);
+	int n_cols = data.size();
+	for (int i = 0; i < n_cols; ++i)
+	{
+		if (counter%n_cols == i)
+		{
+			data[i].push_back(number);
+		} 
+	}
 }
 
 template<typename number_type>
-void read_data(std::string filename, Vector<number_type> &x_data, Vector<number_type> &y_data, Vector<number_type> &dy_data, size_type skip_rows = 0)
+void read_data(std::string filename, std::vector<Vector<number_type>> & data, size_type skip_rows = 0)
 {
-	x_data.clear();
-	y_data.clear();
-	dy_data.clear();
 	std::ifstream infile(filename);
 	std::string line;
 
@@ -59,7 +58,7 @@ void read_data(std::string filename, Vector<number_type> &x_data, Vector<number_
 			{
 				end_of_number = true;
 				number_type number = std::stod(numberstring);
-				insert(number, counter_numbers, x_data, y_data, dy_data); // save number in the correct vector
+				insert(number, counter_numbers, data); // save number in the correct vector
 				counter_numbers++;
 				numberstring = "";
 			}
@@ -69,7 +68,7 @@ void read_data(std::string filename, Vector<number_type> &x_data, Vector<number_
 			}
 		}
 		number_type number = std::stod(numberstring); // end of line finishes number
-		insert(number, counter_numbers, x_data, y_data, dy_data);
+		insert(number, counter_numbers, data);
 		counter_numbers++;
 		numberstring = "";
 		counter_lines++;

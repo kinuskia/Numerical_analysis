@@ -23,10 +23,17 @@ public:
 		return 3;
 	}
 
-	/* model fitting function */
-	number_type f(number_type x, Vector<number_type> popt)
+	/* dimension of the x vector */
+	size_type x_dim() const
 	{
-		return popt[0] * exp(-(x-popt[1])*(x-popt[1])/2/popt[2]/popt[2]);
+		return 1;
+	}
+
+	/* model fitting function */
+	number_type f(Vector<number_type> x, Vector<number_type> popt) const
+	{
+		assert(x.size() == this->x_dim());
+		return popt[0] * exp(-(x[0]-popt[1])*(x[0]-popt[1])/2/popt[2]/popt[2]);
 	}
 	
 

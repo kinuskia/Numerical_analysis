@@ -59,6 +59,16 @@ public:
 		return m_cols_;
 	}
 
+	void addNewRow(const Vector<number_type> & rowvector)
+	{
+    	m_rows_++;
+    	assert(m_cols_ = rowvector.size());
+      	for (size_type i = 0; i < m_cols_; ++i)
+      	{
+        	m_data_.push_back(rowvector[i]);
+    	}
+    }
+
 	// Overloaded element access operators
 	// A(i, j)
 	inline number_type & operator()(const size_type row, const size_type col)
