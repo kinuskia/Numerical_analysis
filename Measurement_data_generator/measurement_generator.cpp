@@ -4,44 +4,49 @@
 #include <fstream>
 #include "../auxiliary_files/vector.hpp"
 
-double f(double x, Vector<double> popt)
+/* model fitting function */
+template<typename number_type>
+number_type f(Vector<number_type> x, Vector<number_type> popt)
 {
-	return popt[0] * exp(-popt[1]*x) + popt[2];
+	return popt[0] + sqrt((x[0]-popt[1])*(x[0]-popt[1]) + (x[1]-popt[2])*(x[1]-popt[2]));
 }
 
 
 int main ()
 {
-	std::size_t n_data = 1e2;
+	std::size_t n_data = 5;
 	Vector<double> popt(3);
-	popt[0] = 6;
-	popt[1] = 0.6;
-	popt[2] = 1;
+	popt[0] = 0;
+	popt[1] = 0;
+	popt[2] = 0;
 
 
 	
 	Vector<double> pstd(popt.size());
-	double rel = 0.02;
-	double abs = 0.02;
+	double rel = 0.02*0;
+	double abs = 0.02*0+0.1;
 	pstd = rel*popt + abs;
 
-	double x_min = 0;
-	double x_max = 10;
+	Vector<double> lower_x(2, 0);
+	Vector<double> upper_x(2, 100);
+
 
 	std::random_device rd;
 	std::mt19937 gen(rd());
-	std::uniform_real_distribution<> dis_unif(x_min, x_max);
-
-	Vector<double> x(n_data);
+	
+	std::vector<Vector<double>> x(n_data);
 	Vector<double> y(n_data);
 	Vector<double> dy(n_data);
 
 	// Create x values
 	for (std::size_t i = 0; i < n_data; ++i)
 	{
-		x[i] = dis_unif(gen);
+		std::uniform_real_distribution<> dis_unif_x(lower_x[0], upper_x[0]);
+		std::uniform_real_distribution<> dis_unif_y(lower_x[1], upper_x[1]);
+		(x[i]).push_back(dis_unif_x(gen));
+		(x[i]).push_back(dis_unif_y(gen));
 	}
-	std::sort(x.begin(), x.end());
+	//std::sort(x.begin(), x.end());
 	
 
 	// Create y and dy values
@@ -58,7 +63,11 @@ int main ()
 	std::ofstream outfile("measurements.txt");
 	for (std::size_t i = 0; i < n_data; ++i)
 	{
-		outfile << x[i] << "  " << y[i] << " " << dy[i] << "\n";
+		for (std::size_t j = 0; j < x[0].size(); ++j)
+		{
+			outfile << (x[i])[j] << " ";
+		}
+		outfile << y[i] << " " << dy[i] << "\n";
 	}
 
 

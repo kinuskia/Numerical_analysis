@@ -27,6 +27,8 @@ public:
 	, y_(y)
 	, dy_(dy)
 	, J_(x[0].size(), model.n_parameters(), 0)
+	, best_fit_(model.n_parameters())
+	, solution_found_(false)
 	, n_param_(model.n_parameters())
 	, n_data_(x[0].size())
 	, d_of_freedom_(x[0].size()-model.n_parameters())
@@ -46,6 +48,8 @@ public:
 	void clear()
 	{
 		converged_ = false;
+		best_fit_ = 0;
+		solution_found_ = false;
 	}
 
 	/* 
@@ -215,6 +219,7 @@ public:
 		Vector<number_type> r_abs(residual.size());
 		r_abs = residual;
 		abs(r_abs);
+		//std::cout << "Gradient: " << *std::max_element(r_abs.begin(), r_abs.end()) << "\n";
 		if(*std::max_element(r_abs.begin(), r_abs.end()) < limit_gradient_)
 		{
 			result = true;
@@ -224,6 +229,8 @@ public:
 		// convergence in parameters?
 		Vector<number_type> h_scaled(h.size());
 		h_scaled = h/q;
+		abs(h_scaled);
+		//std::cout << "param: " << *std::max_element(h_scaled.begin(), h_scaled.end()) << "\n";
 		if(*std::max_element(h_scaled.begin(), h_scaled.end()) < limit_param_)
 		{
 			result = true;
@@ -263,60 +270,103 @@ public:
 
 		for (size_type i = 0; i < maxit_; ++i)
 		{
-				// for (size_type i = 0; i < q.size(); ++i)
-				// {
-				// 	std::cout << i << " : " << q[i] << "\n";
-				// }
-				// std::cout << "chi2/d.o.f = " << chi2_red(q) << "\n";
-				// std::cout << non_invertible << "\n";
-				// Fill entries of coefficient matrix and save diagonal entries of JtWJ
-				Vector<number_type> diagonals(n_param_);
-				fill_left(A, q, lambda, diagonals);
+			// for (size_type i = 0; i < q.size(); ++i)
+			// {
+			// 	std::cout << i << " : " << q[i] << "\n";
+			// }
+			//std::cout << "chi2/d.o.f = " << chi2_red(q) << "\n";
+			// std::cout << non_invertible << "\n";
+			// Fill entries of coefficient matrix and save diagonal entries of JtWJ
+			Vector<number_type> diagonals(n_param_);
+			fill_left(A, q, lambda, diagonals);
 
-				// Fill entries of residual vector and make a copy
-				fill_right(r, q);
-				Vector<number_type> r_copy(r);
+			// Fill entries of residual vector and make a copy
+			fill_right(r, q);
+			Vector<number_type> r_copy(r);
 
-				// solve system for update
-				row_equilibrate(A, s, non_invertible); // equilibrate rows
-				if (non_invertible) // break in case of a non-invertible matrix
-				{
-					converged_ = false;
-					break;
-				}
-				lu_fullpivot(A, perm_r, perm_c); // LU decomposition of A
-				z = number_type(0.0); // clear solution
-				apply_equilibrate(s, r); // equilibration of right-hand side
-				permute_forward(perm_r, r); // permutation of right-hand side
-				solveL(A, r, r); // forward substitution
-				solveU(A, z, r); // backward substitution
-				permute_backward(perm_c, z); // backward permutation
+			// solve system for update
+			row_equilibrate(A, s, non_invertible); // equilibrate rows
+			if (non_invertible) // break in case of a non-invertible matrix
+			{
+				converged_ = false;
+				break;
+			}
+			lu_fullpivot(A, perm_r, perm_c); // LU decomposition of A
+			z = number_type(0.0); // clear solution
+			apply_equilibrate(s, r); // equilibration of right-hand side
+			permute_forward(perm_r, r); // permutation of right-hand side
+			solveL(A, r, r); // forward substitution
+			solveU(A, z, r); // backward substitution
+			permute_backward(perm_c, z); // backward permutation
 
-				// check whether solution sufficiently decreases chi2
-				number_type metric = check_improvement(q, z, lambda, diagonals, r_copy);
-				//std::cout << "Metric: " <<  metric << "\n";
-				if (metric > eps_lm_)
-				{
-					q += z;
-					lambda = std::max(lambda/scale_down_, 1e-7);
-				}
-				else
-				{
-					lambda = std::min(lambda*scale_up_, 1e7);
-				}
+			// check whether solution sufficiently decreases chi2
+			number_type metric = check_improvement(q, z, lambda, diagonals, r_copy);
+			//std::cout << "Metric: " <<  metric << "\n";
+			if (metric > eps_lm_)
+			{
+				q += z;
+				lambda = std::max(lambda/scale_down_, 1e-7);
+			}
+			else
+			{
+				lambda = std::min(lambda*scale_up_, 1e7);
+			}
 
-				// Recomputing jacobian
-				set_J(q); 
+			// Recomputing jacobian
+			set_J(q); 
 
 
-				// check convergence
-				if (has_converged(q, z, r_copy))
-				{
-					converged_ = true;
-					break;
-				}
+			// check convergence
+			if (has_converged(q, z, r_copy))
+			{
+				//std::cout << "Converged! \n";
+				converged_ = true;
+				break;
+			}
 
 		}
+
+	}
+
+	// find best-fit result by drawing n random starting points from a given region
+	// return ratio of number of starting points having led to the best-fit result
+	number_type find_best_fit(Vector<number_type> & popt, const Vector<number_type> & lower_range, const Vector<number_type> & upper_range, size_type n)
+	{
+		assert(popt.size() == n_param_);
+		assert(lower_range.size() == n_param_);
+		assert(upper_range.size() == n_param_);
+
+		// temporary best-fit
+		Vector<number_type> popt_temp(popt.size());
+		number_type chi2_temp;
+		size_type counter_best_fit = 0;
+		number_type tol = 1.e-5;
+
+		for (size_type i = 0; i < n; ++i)
+		{
+			// Draw random starting point
+			fill_from_region(popt, lower_range, upper_range);
+
+			// minimize from that point
+			solve(popt);
+
+			// compare to minimum found so far
+			number_type chi2_current = chi2_red(popt);
+			number_type chi2_diff = chi2_current - chi2_temp;
+			if ((chi2_diff < -tol && converged_) || (counter_best_fit == 0 && converged_))
+			{
+				chi2_temp = chi2_current;
+				popt_temp = popt;
+				counter_best_fit = 1;
+			}
+			else if (abs(chi2_diff) < tol)
+			{
+				counter_best_fit++;
+			}
+
+		}
+
+		return 1.*counter_best_fit/n;
 
 	}
 
@@ -330,6 +380,10 @@ private:
 
 	// Jacobian
 	Matrix<number_type> J_;
+
+	//	solution
+	Vector<number_type> best_fit_;
+	bool solution_found_;
 
 	// useful constants
 	size_type n_param_;
