@@ -42,22 +42,24 @@ int main ()
 	range_min[2] = 0.1;
 	range_max[2] = 2;
 
-	// Set up initial guess
+	number_type success_ratio;
 	Vector<number_type> popt(gaussian.n_parameters());
 
-	popt[0] = 5.56108;
-	popt[1] = 5.84062;
-	popt[2] = 0.0538888;
-	fill_from_region(popt, range_min, range_max);
-	minimizer.solve(popt);
-	if (!minimizer.converged())
-	{
-		std::cout << "No convergence!\n";
-	}
+	// Calculate fitting result
+	success_ratio = minimizer.find_best_fit(popt, range_min, range_max, 100);
+	std::cout << "Success ratio: " << success_ratio << "\n";
+
+	Vector<number_type> uncertainty(popt.size());
+	Vector<number_type> uncertainty_err(popt.size());
+	minimizer.get_fit_uncertainty("fit_samples.txt", 5e3, uncertainty, uncertainty_err);
+	std::cout << "Fitting result: \n";
 	for (size_type i = 0; i < popt.size(); ++i)
 	{
-		std::cout << i << " : " << popt[i] << "\n";
+		std::cout << popt[i] << " +/- " << uncertainty[i]  << "\n";
 	}
+	uncertainty_err = uncertainty_err / uncertainty;
+	std::cout << "Maximal relative uncertainty error: " << *std::max_element(uncertainty_err.begin(), uncertainty_err.end()) << "\n";
+
 	std::cout << "chi2/d.o.f = " << minimizer.chi2_red(popt) << "\n";
 
 

@@ -5,6 +5,7 @@
 #include "matrix.hpp"
 #include <cmath>
 #include <algorithm>
+#include "storage.hpp"
 
 
 
@@ -48,8 +49,6 @@ public:
 	void clear()
 	{
 		converged_ = false;
-		best_fit_ = 0;
-		solution_found_ = false;
 	}
 
 	/* 
@@ -358,6 +357,7 @@ public:
 				chi2_temp = chi2_current;
 				popt_temp = popt;
 				counter_best_fit = 1;
+				solution_found_ = true;
 			}
 			else if (abs(chi2_diff) < tol)
 			{
@@ -366,9 +366,61 @@ public:
 
 		}
 
+		// save result
+		if (solution_found_)
+		{
+			best_fit_ = chi2_temp;
+			popt = popt_temp;
+		}
+
 		return 1.*counter_best_fit/n;
 
 	}
+
+	// Monte-Carlo uncertainty analysis by generating n experimental data sets
+		void get_fit_uncertainty(std::string filename, size_type n, Vector<number_type> & uncertainty, Vector<number_type> & uncertainty_error)
+		{
+			// Data storage for the best-fit result vectors
+			Storage<number_type> popts(n_param_);
+
+			// For this method, the solution must have been found beforehand
+			assert(solution_found_);
+
+			// save original y-values
+			Vector<number_type> y(y_);
+
+
+			// generate experimental data
+			for (size_type i = 0; i < n; ++i)
+			{
+			
+				// Generate y-values
+				Vector<number_type> y_values(y_);
+				fill_gaussian(y_values, y, dy_);
+				y_ = y_values;
+
+				// solve minimization problem with solution of original
+				// problem as starting point
+				Vector<number_type> popt(best_fit_.size());
+				popt = best_fit_;
+				solve(popt);
+
+				// save result to storage
+				if (converged_)
+				{
+					popts.read_in(popt);
+				}
+			}
+
+			// Restore original y-values
+			y_ = y;
+
+			// Calculate uncertainty result
+			popts.std_deviation(uncertainty, uncertainty_error);
+
+			// print output file
+			popts.write(filename, false);
+		}
 
 private:
 	// theory model and experimental data

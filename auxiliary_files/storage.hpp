@@ -296,7 +296,7 @@ public:
 	}
 
 	/* calculate mean of each variable at once and save it into a vector */
-	/* as well as uncertitude vector, taking into account autocorrelation */
+	/* as well as uncertainty vector, taking into account autocorrelation */
 	void mean(Vector<number_type> & average_vector, Vector<number_type> & err_vector)
 	{
 		assert(average_vector.size() == err_vector.size());
@@ -459,6 +459,32 @@ public:
 
 		result_err = result*sqrt(2./(ESS-1));
 
+	}
+
+	/* std deviation vector and uncertainty vector */
+	void std_deviation(Vector<number_type> & result, Vector<number_type> & result_err)
+	{
+		assert(result.size() == result_err.size());
+		assert(result.size() == n_variables_);
+
+
+		// Calculate mean vector
+		Vector<number_type> mean_vec(result.size());
+		Vector<number_type> mean_err(result.size());
+		mean(mean_vec, mean_err);
+
+		// Calculation of the std deviation vector
+		result = 0;
+		for (size_type i = n_variables_*thermalization_; i < data_.size(); ++i)
+		{
+			result[i%n_variables_] += pow((data_[i]-mean_vec[i%n_variables_]),2);
+		}
+		result = result / (entries_per_variable_-1);
+		sqrt(result);
+
+		// Calculation of its uncertainty
+		result_err = result/sqrt(2*entries_per_variable_);
+		
 	}
 
 	/* Calculate standard deviation of variable i */
