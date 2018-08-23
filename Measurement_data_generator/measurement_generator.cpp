@@ -14,37 +14,39 @@ number_type f(Vector<number_type> x, Vector<number_type> popt)
 
 int main ()
 {
-	std::size_t n_data = 5;
+	std::size_t n_data = 50;
 	Vector<double> popt(3);
 	popt[0] = 0;
 	popt[1] = 0;
 	popt[2] = 0;
 
 
-	
-	Vector<double> pstd(popt.size());
-	double rel = 0.02*0;
-	double abs = 0.02*0+0.1;
-	pstd = rel*popt + abs;
-
-	Vector<double> lower_x(2, 0);
-	Vector<double> upper_x(2, 100);
+	Vector<double> lower_x(2, -150);
+	Vector<double> upper_x(2, 150);
 
 
 	std::random_device rd;
 	std::mt19937 gen(rd());
 	
 	std::vector<Vector<double>> x(n_data);
+	std::vector<Vector<double>> dx(n_data);
 	Vector<double> y(n_data);
 	Vector<double> dy(n_data);
 
-	// Create x values
+	double rel = 0.02*0;
+	double abs = 0.02*0+0.1;
+
+	double rel_x = 0.02*0;
+	double abs_x = 0.02*0+0.1;
+
+	// Create x and dy values
 	for (std::size_t i = 0; i < n_data; ++i)
 	{
 		std::uniform_real_distribution<> dis_unif_x(lower_x[0], upper_x[0]);
 		std::uniform_real_distribution<> dis_unif_y(lower_x[1], upper_x[1]);
 		(x[i]).push_back(dis_unif_x(gen));
 		(x[i]).push_back(dis_unif_y(gen));
+		dx[i] = rel_x * x[i] + abs_x;
 	}
 	//std::sort(x.begin(), x.end());
 	
@@ -66,6 +68,7 @@ int main ()
 		for (std::size_t j = 0; j < x[0].size(); ++j)
 		{
 			outfile << (x[i])[j] << " ";
+			outfile << (dx[i])[j] << " ";
 		}
 		outfile << y[i] << " " << dy[i] << "\n";
 	}

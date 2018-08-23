@@ -15,7 +15,40 @@ class LM
 public:
 	typedef std::size_t size_type;
 	typedef REAL number_type;
-	// Default constructor
+	// Constructor with x-uncertainties
+	LM(
+	Model<number_type> model,
+	std::vector<Vector<number_type>> x,
+	std::vector<Vector<number_type>> dx,
+	Vector<number_type> y,
+	Vector<number_type> dy
+	)
+	: model_(model)
+	, x_transposed_(x)
+	, x_(x[0].size())
+	, dx_transposed_(dx)
+	, dx_(dx[0].size())
+	, x_error_(true)
+	, y_(y)
+	, dy_(dy)
+	, J_(x[0].size(), model.n_parameters(), 0)
+	, best_fit_(model.n_parameters())
+	, solution_found_(false)
+	, n_param_(model.n_parameters())
+	, n_data_(x[0].size())
+	, d_of_freedom_(x[0].size()-model.n_parameters())
+	, maxit_(10*model.n_parameters()+10)
+	, lambda0_(1.e-2)
+	, scale_up_(11.)
+	, scale_down_(9.)
+	, limit_gradient_(1.e-12)
+	, limit_param_(1.e-12)
+	, eps_lm_(1.e-1)
+	, converged_(false)
+	{
+		transpose_x_data();
+	}
+	// Constructor without x-uncertainties
 	LM(
 	Model<number_type> model,
 	std::vector<Vector<number_type>> x,
@@ -25,6 +58,9 @@ public:
 	: model_(model)
 	, x_transposed_(x)
 	, x_(x[0].size())
+	, dx_transposed_(x)
+	, dx_(x[0].size())
+	, x_error_(false)
 	, y_(y)
 	, dy_(dy)
 	, J_(x[0].size(), model.n_parameters(), 0)
@@ -70,6 +106,10 @@ public:
 			for (size_type j = 0; j < x_transposed_.size(); ++j)
 			{
 				(x_[i]).push_back((x_transposed_[j])[i]);
+				if (x_error_)
+				{
+					(dx_[i]).push_back((dx_transposed_[j])[i]);
+				}
 			}
 		}
 	}
@@ -80,7 +120,7 @@ public:
 		{
 			for (size_type j = 0; j < x_[0].size(); ++j)
 			{
-				std::cout << (x_[i])[j] << " ";
+				std::cout << (x_[i])[j] << " +/- " << (dx_[i])[j] << " ";
 			}
 			std::cout << "\n";
 		}
@@ -386,13 +426,24 @@ public:
 			// For this method, the solution must have been found beforehand
 			assert(solution_found_);
 
-			// save original y-values
+			// save original x- and y-values
+			std::vector<Vector<number_type>> x(x_);
 			Vector<number_type> y(y_);
 
 
 			// generate experimental data
 			for (size_type i = 0; i < n; ++i)
 			{
+				// Generate x-values
+				if (x_error_)
+				{
+					std::vector<Vector<number_type>> x_values(x_);
+					for (size_type j = 0; j < n_data_; ++j)
+					{
+						fill_gaussian(x_values[j], x[j], dx_[j]);
+					}
+					x_ = x_values;
+				}
 			
 				// Generate y-values
 				Vector<number_type> y_values(y_);
@@ -412,7 +463,8 @@ public:
 				}
 			}
 
-			// Restore original y-values
+			// Restore original x- and y-values
+			x_ = x;
 			y_ = y;
 
 			// Calculate uncertainty result
@@ -427,6 +479,9 @@ private:
 	Model<number_type> model_;
 	std::vector<Vector<number_type>> x_transposed_;
 	std::vector<Vector<number_type>> x_;
+	std::vector<Vector<number_type>> dx_transposed_;
+	std::vector<Vector<number_type>> dx_;
+	bool x_error_;
 	Vector<number_type> y_;
 	Vector<number_type> dy_;
 

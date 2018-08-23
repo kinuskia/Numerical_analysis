@@ -15,11 +15,12 @@ int main ()
 
 
 	// Read in experimental data
-	std::vector<Vector<number_type>> data(3); // Read in three columns
+	std::vector<Vector<number_type>> data(4); // Read in three columns
 	read_data("measurements.txt", data);
 	Vector<number_type> x(data[0]);
-	Vector<number_type> y(data[1]);
-	Vector<number_type> dy(data[2]);
+	Vector<number_type> dx(data[1]);
+	Vector<number_type> y(data[2]);
+	Vector<number_type> dy(data[3]);
 
 
 	// Set up fitting model
@@ -29,7 +30,9 @@ int main ()
 	// Set up Levenberg-Marquardt solver
 	std::vector<Vector<number_type>> X(1);
 	X[0] = x;
-	LM<number_type> minimizer(gaussian, X, y, dy);
+	std::vector<Vector<number_type>> dX(1);
+	dX[0] = dx;
+	LM<number_type> minimizer(gaussian, X, dX, y, dy);
 
 
 	// lower and upper bounds for search region
@@ -39,8 +42,8 @@ int main ()
 	range_max[0] = 7;
 	range_min[1] = 3;
 	range_max[1] = 5;
-	range_min[2] = 0.1;
-	range_max[2] = 2;
+	range_min[2] = 0.7;
+	range_max[2] = 1.0;
 
 	number_type success_ratio;
 	Vector<number_type> popt(gaussian.n_parameters());
