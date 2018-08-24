@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt 
 import numpy as np 
 
-a, b, c = np.loadtxt("fit_samples.txt", unpack = True)
-n_bins = 64
+a, b, c, chi2 = np.loadtxt("fit_samples.txt", unpack = True)
+n_bins = 100
 
 plt.figure(1)
 plt.hist(a, n_bins, normed = True) 
@@ -25,6 +25,15 @@ plt.ylabel("density")
 plt.savefig("c.pdf", format = "pdf", bbox_inches = "tight")
 plt.close(3)
 
+plt.figure(4)
+plt.hist(chi2, n_bins, normed = True) 
+plt.xlabel("$\\chi^2$")
+plt.ylabel("density")
+plt.savefig("chi2.pdf", format = "pdf", bbox_inches = "tight")
+plt.close(4)
 
+print(np.mean(a))
+print(np.mean(b))
+print(np.mean(c))
 
 

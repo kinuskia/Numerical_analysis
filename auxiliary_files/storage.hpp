@@ -300,7 +300,7 @@ public:
 	void mean(Vector<number_type> & average_vector, Vector<number_type> & err_vector)
 	{
 		assert(average_vector.size() == err_vector.size());
-		assert(average_vector.size() == n_variables_);
+		assert(average_vector.size() == n_popt_);
 
 		// Determine burn-in length
 		determine_burn_in_length();
@@ -310,6 +310,10 @@ public:
 		average_vector = 0;
 		for (size_type i = n_variables_*thermalization_; i < data_.size(); ++i)
 		{
+			if (i%n_variables_ >= n_popt_)
+			{
+				continue;
+			}
 			average_vector[i%n_variables_] += data_[i];
 		}
 		average_vector = average_vector / entries_per_variable_;
@@ -465,7 +469,7 @@ public:
 	void std_deviation(Vector<number_type> & result, Vector<number_type> & result_err)
 	{
 		assert(result.size() == result_err.size());
-		assert(result.size() == n_variables_);
+		assert(result.size() == n_popt_);
 
 
 		// Calculate mean vector
@@ -477,6 +481,10 @@ public:
 		result = 0;
 		for (size_type i = n_variables_*thermalization_; i < data_.size(); ++i)
 		{
+			if ((i%n_variables_) >= n_popt_)
+			{
+				continue;
+			}
 			result[i%n_variables_] += pow((data_[i]-mean_vec[i%n_variables_]),2);
 		}
 		result = result / (entries_per_variable_-1);

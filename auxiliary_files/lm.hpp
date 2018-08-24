@@ -409,7 +409,7 @@ public:
 		// save result
 		if (solution_found_)
 		{
-			best_fit_ = chi2_temp;
+			best_fit_ = popt_temp;
 			popt = popt_temp;
 		}
 
@@ -421,7 +421,7 @@ public:
 		void get_fit_uncertainty(std::string filename, size_type n, Vector<number_type> & uncertainty, Vector<number_type> & uncertainty_error)
 		{
 			// Data storage for the best-fit result vectors
-			Storage<number_type> popts(n_param_);
+			Storage<number_type> popts(best_fit_, 1);
 
 			// For this method, the solution must have been found beforehand
 			assert(solution_found_);
@@ -460,6 +460,7 @@ public:
 				if (converged_)
 				{
 					popts.read_in(popt);
+					popts.read_in(chi2_red(popt));
 				}
 			}
 

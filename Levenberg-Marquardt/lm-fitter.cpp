@@ -54,7 +54,7 @@ int main ()
 
 	Vector<number_type> uncertainty(popt.size());
 	Vector<number_type> uncertainty_err(popt.size());
-	minimizer.get_fit_uncertainty("fit_samples.txt", 5e3, uncertainty, uncertainty_err);
+	minimizer.get_fit_uncertainty("fit_samples.txt", 5e4, uncertainty, uncertainty_err);
 	std::cout << "Fitting result: \n";
 	for (size_type i = 0; i < popt.size(); ++i)
 	{
@@ -64,6 +64,7 @@ int main ()
 	std::cout << "Maximal relative uncertainty error: " << *std::max_element(uncertainty_err.begin(), uncertainty_err.end()) << "\n";
 
 	std::cout << "chi2/d.o.f = " << minimizer.chi2_red(popt) << "\n";
+
 
 
 
