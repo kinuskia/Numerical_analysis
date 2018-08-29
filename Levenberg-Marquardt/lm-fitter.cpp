@@ -15,7 +15,7 @@ int main ()
 
 
 	// Read in experimental data
-	std::vector<Vector<number_type>> data(4); // Read in three columns
+	std::vector<Vector<number_type>> data(4); // Read in columns
 	read_data("measurements.txt", data);
 	Vector<number_type> x(data[0]);
 	Vector<number_type> dx(data[1]);
@@ -24,7 +24,7 @@ int main ()
 
 
 	// Set up fitting model
-	Model<number_type> gaussian;
+	Model<number_type> fitting_model;
 
 
 	// Set up Levenberg-Marquardt solver
@@ -32,29 +32,33 @@ int main ()
 	X[0] = x;
 	std::vector<Vector<number_type>> dX(1);
 	dX[0] = dx;
-	LM<number_type> minimizer(gaussian, X, y, dy);
+	LM<number_type> minimizer(fitting_model, X, dX, y, dy);
 
 
 	// lower and upper bounds for search region
-	Vector<number_type> range_min(gaussian.n_parameters());
-	Vector<number_type> range_max(gaussian.n_parameters());
+	Vector<number_type> range_min(fitting_model.n_parameters());
+	Vector<number_type> range_max(fitting_model.n_parameters());
 	range_min[0] = 5;
 	range_max[0] = 7;
-	range_min[1] = 3;
-	range_max[1] = 5;
-	range_min[2] = 0.7;
-	range_max[2] = 1.0;
+	range_min[1] = 0.8;
+	range_max[1] = 1.4;
+	range_min[2] = 4;
+	range_max[2] = 7;
+	range_min[3] = 0.4;
+	range_max[3] = 0.6;
+	range_min[4] = 0.9;
+	range_max[4] = 1.1;
 
 	number_type success_ratio;
-	Vector<number_type> popt(gaussian.n_parameters());
+	Vector<number_type> popt(fitting_model.n_parameters());
 
 	// Calculate fitting result
-	success_ratio = minimizer.find_best_fit(popt, range_min, range_max, 100);
+	success_ratio = minimizer.find_best_fit(popt, range_min, range_max, 1e2);
 	std::cout << "Success ratio: " << success_ratio << "\n";
 
 	Vector<number_type> uncertainty(popt.size());
 	Vector<number_type> uncertainty_err(popt.size());
-	minimizer.get_fit_uncertainty("fit_samples.txt", 5e2, uncertainty, uncertainty_err);
+	minimizer.get_fit_uncertainty("fit_samples.txt", 5e3*3, uncertainty, uncertainty_err);
 	std::cout << "Fitting result: \n";
 	for (size_type i = 0; i < popt.size(); ++i)
 	{
@@ -69,31 +73,6 @@ int main ()
 
 
 
-	
-	// for (size_type i = 0; i < 1e3; ++i)
-	// {
-	// 	fill_from_region(popt, range_min, range_max);
-	// 	Vector<number_type> popt_copy = popt;
-	// 	minimizer.solve(popt);
-	// 	if (!minimizer.converged())
-	// 	{
-	// 		std::cout << minimizer.chi2_red(popt) << "\n";
-	// 		for (size_type i = 0; i < popt.size(); ++i)
-	// 		{
-	// 			std::cout << i << " : " << popt_copy[i] << "\n";
-	// 		}
-	// 	}
-	// }
-
-	// if (!minimizer.converged())
-	// {
-	// 	std::cout << "No convergence!\n";
-	// }
-	// for (size_type i = 0; i < popt.size(); ++i)
-	// {
-	// 	std::cout << i << " : " << popt[i] << "\n";
-	// }
-	// std::cout << "chi2/d.o.f = " << minimizer.chi2_red(popt) << "\n";
 
 
 	

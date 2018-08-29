@@ -323,11 +323,11 @@ public:
 		Vector<number_type> autocorr_times(average_vector.size());
 		Vector<number_type> autocorr_times_err(err_vector.size());
 		autocorr_time(autocorr_times, autocorr_times_err); // calculate integrated autocorrelation times
-		std::cout << "Integrated autocorrelation times: \n";
-		for (size_type i = 0; i < autocorr_times.size(); ++i)
-		{
-			std::cout << "Parameter " << i << " : " << autocorr_times[i] << " + - " << autocorr_times_err[i] << "\n";
-		}
+		// std::cout << "Integrated autocorrelation times: \n";
+		// for (size_type i = 0; i < autocorr_times.size(); ++i)
+		// {
+		// 	std::cout << "Parameter " << i << " : " << autocorr_times[i] << " + - " << autocorr_times_err[i] << "\n";
+		// }
 	
 
 		for (size_type i = 0; i<n_variables_; ++i)

@@ -20,7 +20,7 @@ public:
 	/* number of fitting parameters */
 	size_type n_parameters() const
 	{
-		return 3;
+		return 5;
 	}
 
 	/* dimension of the x vector */
@@ -33,7 +33,7 @@ public:
 	number_type f(Vector<number_type> x, Vector<number_type> popt) const
 	{
 		assert(x.size() == this->x_dim());
-		return popt[0] * exp(-(x[0]-popt[1])*(x[0]-popt[1])/2/popt[2]/popt[2]);
+		return popt[0]*exp(-x[0]*popt[1]) + popt[2]*exp(-x[0]*popt[3]) + popt[4];
 	}
 	
 
