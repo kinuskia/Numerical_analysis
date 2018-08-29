@@ -31,6 +31,7 @@ public:
 	, x_error_(true)
 	, y_(y)
 	, dy_(dy)
+	, sigma2_(dy.size())
 	, J_(x[0].size(), model.n_parameters(), 0)
 	, best_fit_(model.n_parameters())
 	, solution_found_(false)
@@ -63,6 +64,7 @@ public:
 	, x_error_(false)
 	, y_(y)
 	, dy_(dy)
+	, sigma2_(dy.size())
 	, J_(x[0].size(), model.n_parameters(), 0)
 	, best_fit_(model.n_parameters())
 	, solution_found_(false)
@@ -114,6 +116,8 @@ public:
 		}
 	}
 
+
+
 	void print_x_data() const
 	{
 		for (size_type i = 0; i < x_.size(); ++i)
@@ -146,6 +150,26 @@ public:
 		return (4.*value_h2-value_h)/3.;
 	}
 
+	// Approximation of positional derivative of f(x,q) with respect to x with parameters q 
+	number_type derivative_x(const Vector<number_type> & x, Vector<number_type>  q, size_type parameter_index, number_type stepsize)
+	{
+		assert(x.size()==dx_[0].size());
+		assert(parameter_index >= 0 && parameter_index < x_[0].size());
+		Vector<number_type> position_forward = x;
+		position_forward[parameter_index] += stepsize;
+		Vector<number_type> position_backward = x;
+		position_backward[parameter_index] -= stepsize;
+		return (model_.f(position_forward, q)-model_.f(position_backward, q))/2.0/stepsize;
+	}
+
+	// unbiased estimator of first derivative: weighted sum of evaluations with two different step sizes
+	number_type derivative_x_unbiased(const Vector<number_type> & x, Vector<number_type> q, size_type parameter_index, number_type stepsize)
+	{
+		number_type value_h = derivative_x(x, q, parameter_index, stepsize);
+		number_type value_h2 = derivative_x(x, q, parameter_index, stepsize/2);
+		return (4.*value_h2-value_h)/3.;
+	}
+
 	// Getter for jacobian
 	number_type J(size_type row_index, size_type column_index) const
 	{
@@ -173,6 +197,22 @@ public:
 		}
 	}
 
+	// compute entries of sigma2 vector where sigma^2 = dy^2 + (df/dx)^2*dx^2
+	void set_sigma(const Vector<number_type> & q)
+	{
+		for (size_type i = 0; i < n_data_; ++i)
+		{
+			sigma2_[i] = dy_[i]*dy_[i];
+			if (x_error_)
+			{
+				for (size_type j = 0; j < dx_[0].size(); ++j)
+				{
+					sigma2_[i] += ( (dx_[i])[j] * (dx_[i])[j] * derivative_x_unbiased(x_[i], q, j, 1.e-5) * derivative_x_unbiased(x_[i], q, j, 1.e-5) );
+				}
+			}
+		}
+	}
+
 	// fill left-hand side of lm equation
 	void fill_left(Matrix<number_type> & A, const Vector<number_type> & q, number_type lambda, Vector<number_type> & diagonals)
 	{
@@ -185,7 +225,7 @@ public:
 				// Compute Jt*W*J
 				for (size_type k = 0; k < n_data_; ++k)
 				{
-					A(i,j) += J_(k,i)*J_(k,j)/dy_[k]/dy_[k];
+					A(i,j) += J_(k,i)*J_(k,j)/sigma2_[k];
 				}
 
 				// Add Levenberg-Marquardt parameter
@@ -212,7 +252,7 @@ public:
 		{
 			for (size_type k = 0; k < n_data_; ++k)
 			{
-				r[i] += J_(k,i)/dy_[k]/dy_[k]*(y_[k]-model_.f(x_[k], q));
+				r[i] += J_(k,i)/sigma2_[k]*(y_[k]-model_.f(x_[k], q));
 			}
 		}
 	}
@@ -223,7 +263,7 @@ public:
 		number_type result = 0;
 		for (size_type i = 0; i < n_data_; ++i)
 		{
-			result += pow((y_[i] - model_.f(x_[i], q))/dy_[i], 2);
+			result += pow((y_[i] - model_.f(x_[i], q)), 2)/sigma2_[i];
 		}
 
 		return result;
@@ -306,6 +346,7 @@ public:
 
 		// Compute Jacobian at the beginning
 		set_J(q);
+		set_sigma(q);
 
 		for (size_type i = 0; i < maxit_; ++i)
 		{
@@ -353,6 +394,7 @@ public:
 
 			// Recomputing jacobian
 			set_J(q); 
+			set_sigma(q);
 
 
 			// check convergence
@@ -388,6 +430,8 @@ public:
 
 			// minimize from that point
 			solve(popt);
+
+	
 
 			// compare to minimum found so far
 			number_type chi2_current = chi2_red(popt);
@@ -485,6 +529,7 @@ private:
 	bool x_error_;
 	Vector<number_type> y_;
 	Vector<number_type> dy_;
+	Vector<number_type> sigma2_;
 
 	// Jacobian
 	Matrix<number_type> J_;
