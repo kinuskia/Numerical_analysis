@@ -46,6 +46,12 @@ plt.ylabel("density")
 plt.savefig("chi2.pdf", format = "pdf", bbox_inches = "tight")
 plt.close(6)
 
+print(np.mean(a))
+print(np.mean(b))
+print(np.mean(c))
+print(np.mean(d))
+print(np.mean(e))
+
 
 
 

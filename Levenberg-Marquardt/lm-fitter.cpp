@@ -58,7 +58,7 @@ int main ()
 
 	Vector<number_type> uncertainty(popt.size());
 	Vector<number_type> uncertainty_err(popt.size());
-	minimizer.get_fit_uncertainty("fit_samples.txt", 5e3*3, uncertainty, uncertainty_err);
+	minimizer.get_fit_uncertainty("fit_samples.txt", 5e3, uncertainty, uncertainty_err);
 	std::cout << "Fitting result: \n";
 	for (size_type i = 0; i < popt.size(); ++i)
 	{
