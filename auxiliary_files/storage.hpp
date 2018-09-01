@@ -495,6 +495,31 @@ public:
 		
 	}
 
+	/* std deviation of index i and uncertainty  */
+	void std_deviation(size_type index, number_type & result, number_type & result_err)
+	{
+		assert(index >= 0 && index < n_variables_);  
+
+
+		// Calculate mean vector
+		number_type mean_value;
+		number_type mean_err;
+		mean(index, mean_value, mean_err);
+
+		// Calculation of the std deviation vector
+		result = 0;
+		for (size_type i = n_variables_*thermalization_ + index; i < data_.size(); i += n_variables_)
+		{
+			result += pow((data_[i]-mean_value),2);
+		}
+		result = result / (entries_per_variable_-1);
+		result = sqrt(result);
+
+		// Calculation of its uncertainty
+		result_err = result/sqrt(2*entries_per_variable_);
+		
+	}
+
 	/* Calculate standard deviation of variable i */
 	number_type std_deviation(size_type index)
 	{
