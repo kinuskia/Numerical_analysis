@@ -44,6 +44,7 @@ void read_data(std::string filename, std::vector<Vector<number_type>> & data, si
 
 		bool end_of_number = true;
 		std::string numberstring = "";
+		bool last_char_is_number;
 		for (int i = 0; i < line.length(); ++i)
 		{
 			// Detect beginning of a number
@@ -66,11 +67,18 @@ void read_data(std::string filename, std::vector<Vector<number_type>> & data, si
 			{
 				continue; // ignore second, third ... space in a series of spaces
 			}
+			if (i == line.length()-1)
+			{
+				last_char_is_number = is_number;
+			}
 		}
-		number_type number = std::stod(numberstring); // end of line finishes number
-		insert(number, counter_numbers, data);
-		counter_numbers++;
-		numberstring = "";
+		if (last_char_is_number) // if data line does not end with a weird character
+		{
+			number_type number = std::stod(numberstring); // end of line finishes number
+			insert(number, counter_numbers, data);
+			counter_numbers++;
+			numberstring = "";
+		}
 		counter_lines++;
 	}
 
