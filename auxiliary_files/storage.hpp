@@ -52,6 +52,16 @@ public:
 		return entries_per_variable_;
 	}
 
+	// setter methods
+	// set number of variables, only allowed if n_extra_ = 0
+	void set_n_variables(size_type number)
+	{
+		assert(n_extra_ == 0);
+		n_popt_ = number;
+		n_extra_ = 0;
+		n_variables_ = number;
+		entries_per_variable_ = data_.size()/n_variables_;
+	}
 
 
 	/* receive and save input value */
@@ -297,13 +307,16 @@ public:
 
 	/* calculate mean of each variable at once and save it into a vector */
 	/* as well as uncertainty vector, taking into account autocorrelation */
-	void mean(Vector<number_type> & average_vector, Vector<number_type> & err_vector)
+	void mean(Vector<number_type> & average_vector, Vector<number_type> & err_vector, bool determine_burn_in = true)
 	{
 		assert(average_vector.size() == err_vector.size());
 		assert(average_vector.size() == n_popt_);
 
-		// Determine burn-in length
-		determine_burn_in_length();
+		if (determine_burn_in)
+		{
+			// Determine burn-in length
+			determine_burn_in_length();
+		}
 
 
 		// Calculation of the mean vector
