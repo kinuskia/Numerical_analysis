@@ -243,6 +243,7 @@ public:
 		return y;
 	}
 
+
 	// out-of-place Matrix-matrix addition
 	Matrix operator+ (const Matrix & x) const
 	{

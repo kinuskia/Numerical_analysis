@@ -8,7 +8,7 @@
 template<typename number_type>
 number_type f(Vector<number_type> x, Vector<number_type> popt)
 {
-	return popt[0]*exp(-x[0]*popt[1]) + popt[2]*exp(-x[0]*popt[3]) + popt[4];
+	return popt[0] * exp(-(x[0]-popt[1])*(x[0]-popt[1])/2/popt[2]/popt[2]);
 }
 
 
@@ -16,12 +16,13 @@ int main ()
 {
 	std::size_t n_data = 70;
 	std::size_t x_dim = 1;
-	Vector<double> popt(5);
-	popt[0] = 8;
-	popt[1] = 1;
-	popt[2] = 4;
-	popt[3] = 0.4;
-	popt[4] = 1;
+	Vector<double> popt(3);
+	popt[0] = 4;
+	popt[1] = 5;
+	popt[2] = 1;
+
+	// x-uncertainty?
+	bool x_uncertainty = false;
 
 
 	Vector<double> lower_x(1, 0);
@@ -98,7 +99,10 @@ int main ()
 		for (std::size_t j = 0; j < x[0].size(); ++j)
 		{
 			outfile << (x[i])[j] << " ";
-			outfile << (dx[i])[j] << " ";
+			if (x_uncertainty)
+			{
+				outfile << (dx[i])[j] << " ";
+			}
 		}
 		outfile << y[i] << " " << dy[i] << "\n";
 	}

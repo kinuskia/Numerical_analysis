@@ -421,7 +421,7 @@ public:
 		Vector<number_type> popt_temp(popt.size());
 		number_type chi2_temp;
 		size_type counter_best_fit = 0;
-		number_type tol = 1.e-5;
+		number_type tol = 1.e-8;
 
 		for (size_type i = 0; i < n; ++i)
 		{
