@@ -168,6 +168,20 @@ public:
 		return *this;
 	}
 
+	/*
+      Implements A += s*B where s is a scalar and B a matrix
+    */
+	void update (const number_type s, const Matrix<number_type>& B)
+    {
+   		for (std::size_t i=0; i<rowsize(); ++i)
+    	{
+        	for (std::size_t j=0; j<colsize(); ++j)
+        	{
+				(*this)(i,j) += s*B(i,j);
+        	}
+		}
+    }
+
 	// in-place Matrix-vector product: y = A*x
 	template<class V>
 	void mv (Vector<V> & y, const Vector<V> & x) const
@@ -270,26 +284,6 @@ public:
 		y -= x;
 
 		return y;
-	}
-
-	// Make identity matrix
-	template<class T>
-	inline void identity (Matrix<T> & A)
-	{
-		for (typename Matrix<T>::size_type i = 0; i<A.rowsize(); ++i)
-		{
-			for (typename Matrix<T>::size_type j = 0; j<A.colsize(); ++j)
-			{
-				if (i == j)
-				{
-					A[i][j] = T(1);
-				}
-				else
-				{
-					A[i][j] = T(0);
-				}
-			}
-		}
 	}
 
 
@@ -605,10 +599,26 @@ void MatrixInverse_cholesky (Matrix<T> & A, Matrix<T> & inverse)
 
 	}
 	
+}
 
-	
-
-
+// Make identity matrix
+template<class T>
+inline void identity (Matrix<T> & A)
+{
+	for (typename Matrix<T>::size_type i = 0; i<A.rowsize(); ++i)
+	{
+		for (typename Matrix<T>::size_type j = 0; j<A.colsize(); ++j)
+		{
+			if (i == j)
+			{
+				A[i][j] = T(1);
+			}
+			else
+			{
+				A[i][j] = T(0);
+			}
+		}
+	}
 }
 
 

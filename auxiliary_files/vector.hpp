@@ -35,6 +35,25 @@ public:
 		return *this;
 	}
 
+	/*!
+    Returns a new vector that is a subset of the components
+    of the given vector.
+
+    i first index of the new vector, m size of the new vector
+    */
+    Vector sub (size_type i, size_type m)
+    {
+    	Vector v(m);
+    	Vector &self = *this;
+    	size_type k=0;
+    	for (size_type j=i; j<i+m; j++)
+    	{
+    		v[k]=self[j];
+    		k++;
+    	}
+    	return v;
+    }
+
 	/* Multiplication by a scalar */
 	Vector & operator*= (const REAL value)
 	{

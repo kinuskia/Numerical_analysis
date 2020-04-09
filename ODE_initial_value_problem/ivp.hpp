@@ -28,7 +28,7 @@ public:
 		/*
 		"output":
 		deriv[0]: derivative of first coordinate (position)
-		deriv[0]: derivative of second coordinate (velocity)
+		deriv[1]: derivative of second coordinate (velocity)
 		*/
 		if (deriv.size() != state.size()-1 || deriv.size() != dim_)
 		{
