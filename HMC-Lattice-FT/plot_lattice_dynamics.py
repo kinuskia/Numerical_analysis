@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 data = np.loadtxt("output/lattice_dynamics.txt", unpack =True)
 
 range_min = 0
-range_max = 1000
+range_max = -1
 
 thermalization = 20 
 
@@ -37,15 +37,16 @@ plt.close(5)
 
 
 t, G, G_err = np.loadtxt("output/correlator.txt", unpack=True)
+T = len(t)
 def exponential(t, a, b):
-	return a*np.exp(-b*t)
+	return a*np.cosh(b*(1.0*T/2-t))
 from scipy.optimize import curve_fit
 
-popt, pcov =  curve_fit(exponential, t[:int(len(t)/2)], G[:int(len(t)/2)], sigma=G_err[:int(len(t)/2)], absolute_sigma=True, p0=[1,1])
-t_values = np.linspace(0, len(t)/2, 100)
-chi2_red = np.sum(((G[:int(len(t)/2)]-exponential(t[:int(len(t)/2)],*popt))/G_err[:int(len(t)/2)])**2)/(len(t[:int(len(t)/2)])-2)
+popt, pcov =  curve_fit(exponential, t[:int(len(t))], G[:int(len(t))], sigma=G_err[:int(len(t))], absolute_sigma=True, p0=[1,1])
+t_values = np.linspace(0, len(t), 100)
+chi2_red = np.sum(((G[:int(len(t))]-exponential(t[:int(len(t))],*popt))/G_err[:int(len(t))])**2)/(len(t[:int(len(t))])-2)
 print("chi2_red", chi2_red)
-a = 0.1
+a = 1
 plt.figure(7)
 plt.scatter(t, G, s=10)
 plt.plot(t_values, exponential(t_values, *popt), label="$E_1-E_0 = $ {0} +- {1}".format(round(popt[1]/a,4), np.round(np.sqrt(pcov[1][1])/a,4)))

@@ -22,10 +22,8 @@ public:
 	typedef std::size_t size_type;
 	typedef REAL number_type;
 	/* Standard constructor, fed with leapfrog data */
-	HMC(LatticeAction<number_type> action, Vector<number_type> range_min, Vector<number_type> range_max, number_type stepsize, size_type n_steps_min, size_type n_steps_max)
-	: range_min_(range_min)
-	, range_max_(range_max) 
-	, stepsize_(stepsize)
+	HMC(LatticeAction<number_type> action, number_type stepsize, size_type n_steps_min, size_type n_steps_max)
+	: stepsize_(stepsize)
 	, n_steps_min_(n_steps_min)
 	, n_steps_max_(n_steps_max)
 	, counter_(0)
@@ -327,7 +325,7 @@ public:
 	}
 
 	// compute autocorrelation of the lattice sites for different number of leapfrog steps
-	void autocorrelation(size_type Lmin, size_type Lmax, size_type Lstep, std::string filename)
+	void autocorrelation(const Vector<number_type> & range_min, const Vector<number_type> & range_max, size_type Lmin, size_type Lmax, size_type Lstep, std::string filename)
 	{
 		Storage<number_type> autocorrel_times(action_.n_sites(),1);
 		for (size_type L = Lmin; L <= Lmax; L += Lstep) // Loop over different numbers of Leapfrog steps
@@ -339,7 +337,7 @@ public:
 
 			// Find a starting configuration
 			Vector<number_type> sites(action_.n_sites());
-			find_start(sites);
+			find_start(sites, range_min, range_max);
 
 
 			Storage<number_type> data(action_.n_sites(), 0);
@@ -372,14 +370,14 @@ public:
 	}
 
 	/* Find a starting point that respects contraints */
-	void find_start(Vector<number_type> & initial)
+	void find_start(Vector<number_type> & initial, const Vector<number_type> & range_min, const Vector<number_type> & range_max)
 	{
 		if (initial.size() != action_.n_sites())
 		{
 			throw std::runtime_error("Wrong dimensions\n");
 		}
 		
-		fill_from_region(initial, range_min_, range_max_);
+		fill_from_region(initial, range_min, range_max);
 	}
 
 	// /* Create a Markov chain without analysis and without output to console */
@@ -859,8 +857,7 @@ public:
 private:
 	/* measured data */
 	LatticeAction<number_type> action_;
-	Vector<number_type> range_min_;
-	Vector<number_type> range_max_;
+
 
 	/* parameters for the leapfrog integrator */
 	number_type stepsize_;

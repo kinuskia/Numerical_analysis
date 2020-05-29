@@ -18,7 +18,7 @@ void to_file(std::string filename, std::vector<std::vector<number_type>> data_co
 		for (size_type j = 0; j < data_columns.size(); ++j)
 		{
 			number_type value = (data_columns[j])[i] ;
-			if (isnan(value))
+			if (std::isnan(value))
 			{
 				outfile << 0;
 			}

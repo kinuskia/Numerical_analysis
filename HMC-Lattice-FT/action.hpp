@@ -4,7 +4,7 @@
 #include "../auxiliary_files/vector.hpp"
 #include <stdexcept>
 
-#include "array4d.hpp"
+#include "array3d.hpp"
 
 
 // Define here the Lattice action of the theory
@@ -17,13 +17,15 @@ public:
 	LatticeAction(
 	size_type N,
 	size_type d,
-	number_type T,
-	number_type m
+	number_type L,
+	number_type m,
+	number_type lambda
 	) // default constructor
 	: N_(N)
 	, d_(d)
-	, T_(T)
+	, L_(L)
 	, m_(m)
+	, lambda_(lambda)
 	{}
 
 	/* number of lattice grid points */
@@ -56,7 +58,7 @@ public:
 	// 		throw std::runtime_error("Array fed to action has incorrect size.\n");
 	// 	}
 
-	// 	number_type a = T_/N_;
+	// 	number_type a = L_/N_;
 	// 	number_type result = 0;
 	// 	for (size_type i = 0; i < N_; ++i)
 	// 	{
@@ -77,9 +79,9 @@ public:
 			throw std::runtime_error("Array fed to action has incorrect size.\n");
 		}
 
-		Array4d<number_type> grid(q);
+		Array3d<number_type> grid(q);
 
-		number_type a = T_/N_;
+		number_type a = L_/N_;
 		number_type result = 0;
 		// sum over lattice sites
 		for (int t = 0; t < n_sites_per_dim(); ++t)
@@ -88,56 +90,38 @@ public:
 			{
 				for (int y = 0; y < n_sites_per_dim(); ++y)
 				{
-					for (int z = 0; z < n_sites_per_dim(); ++z)
+					
+					number_type phi = grid(index(t), index(x), index(y));
+					// compute kinetic term of the Lagrangian
+					number_type kinetic = 0;
+					for (size_type mu = 0; mu < n_dim(); ++mu)
 					{
-						number_type phi = grid(index(t), index(x), index(y), index(z));
-						// get kinetic term of the Lagrangian
-						number_type kinetic = 0;
-						for (size_type mu = 0; mu < n_dim(); ++mu)
+						number_type diffp1;
+					
+						if (mu == 0)
 						{
-							number_type diffp1;
-							number_type diffp2;
-							number_type diffm1;
-							number_type diffm2;
-							if (mu == 0)
-							{
-								diffp2 = grid(index(t+2),index(x),index(y),index(z))-phi;
-								diffp1 = grid(index(t+1),index(x),index(y),index(z))-phi;
-								diffm1 = grid(index(t-1),index(x),index(y),index(z))-phi;
-								diffm2 = grid(index(t-2),index(x),index(y),index(z))-phi;
-							}
-							else if (mu == 1)
-							{
-								diffp2 = grid(index(t),index(x+2),index(y),index(z))-phi;
-								diffp1 = grid(index(t),index(x+1),index(y),index(z))-phi;
-								diffm1 = grid(index(t),index(x-1),index(y),index(z))-phi;
-								diffm2 = grid(index(t),index(x-2),index(y),index(z))-phi;
-							}
-							else if (mu == 2)
-							{
-								diffp2 = grid(index(t),index(x),index(y+2),index(z))-phi;
-								diffp1 = grid(index(t),index(x),index(y+1),index(z))-phi;
-								diffm1 = grid(index(t),index(x),index(y-1),index(z))-phi;
-								diffm2 = grid(index(t),index(x),index(y-2),index(z))-phi;
-							}
-							else if (mu == 3)
-							{
-								diffp2 = grid(index(t),index(x),index(y),index(z+2))-phi;
-								diffp1 = grid(index(t),index(x),index(y),index(z+1))-phi;
-								diffm1 = grid(index(t),index(x),index(y),index(z-1))-phi;
-								diffm2 = grid(index(t),index(x),index(y),index(z-2))-phi;
-							}
-							kinetic += 1./2*diffp1*diffp1/a/a;	
+							diffp1 = grid(index(t+1),index(x),index(y))-phi;
 						}
-						// get mass term
-						number_type massive = (m_*m_/2)*phi*phi;
+						else if (mu == 1)
+						{
+							diffp1 = grid(index(t),index(x+1),index(y))-phi;
+						}
+						else if (mu == 2)
+						{
+							diffp1 = grid(index(t),index(x),index(y+1))-phi;
+						}
 
-						// get interaction term
-						number_type interact = interaction(phi);
-
-						// compute Lagrangian
-						result += a*a*a*a*(kinetic + massive + interact);
+						kinetic += 1./2*(diffp1/a)*(diffp1/a);	
 					}
+					// compute mass term
+					number_type massive = (m_*m_/2)*phi*phi;
+
+					// compute interaction term
+					number_type interact = interaction(phi);
+
+					// compute Lagrangian
+					result += a*a*a*a*(kinetic + massive + interact);
+					
 				}
 			}
 		}
@@ -149,7 +133,7 @@ public:
 	// help function: interaction term
 	number_type interaction (number_type phi)
 	{
-		return 0;
+		return lambda_/4./3./2.*phi*phi*phi*phi;
 	}
 
 	// method to keep track of correct index with periodic boundary conditions
@@ -174,29 +158,34 @@ public:
 		{
 			throw std::runtime_error("time index overflow\n");
 		}
-		Array4d<number_type> grid(q);
+		Array3d<number_type> grid(q);
 
-		Vector<number_type> Gammas(n_sites_per_dim());
-		for (size_type i = 0; i < Gammas.size(); ++i)
-		{
-			Gammas[i] = grid.average_at(i);
-		}
+		// Compute field position average for all time slices
+
+		// Vector<number_type> Gammas(n_sites_per_dim());
+		// for (size_type i = 0; i < Gammas.size(); ++i)
+		// {
+		// 	Gammas[i] = grid.average_at(i);
+		// }
 		
-		number_type result = 0;
-		for (int i = 0; i < n_sites_per_dim(); ++i)
-		{
-			result += Gammas[i]*Gammas[index(i+t)];
-		}
+		// number_type result = 0;
+		// for (int i = 0; i < n_sites_per_dim(); ++i)
+		// {
+		// 	result += Gammas[i]*Gammas[index(i+t)];
+		// }
 
-		return result/n_sites_per_dim();
+		// return result/n_sites_per_dim();
+
+		return grid.average_at(t);
 	}
 
 private:
-	number_type m_; // (bare) mass of the particle
+	number_type m_; // mass of the particle
+	number_type lambda_; // coupling constant
 
 	size_type N_; // number of lattice sites per dimension
-	size_type d_; // number of lattice sites
-	number_type T_; // lattice time size
+	size_type d_; // number of dimensions
+	number_type L_; // lattice size per direction
 };
 
 
