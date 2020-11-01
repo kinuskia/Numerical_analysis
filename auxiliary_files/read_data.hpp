@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include "vector.hpp"
+#include "matrix.hpp"
 
 typedef std::size_t size_type;
 /* free functions to read in a data file and save it in a vector */
@@ -80,6 +81,25 @@ void read_data(std::string filename, std::vector<Vector<number_type>> & data, si
 			numberstring = "";
 		}
 		counter_lines++;
+	}
+
+}
+
+// overload to save into a matrix
+template<typename number_type>
+void read_data(std::string filename, Matrix<number_type> & data, size_type skip_rows = 0)
+{
+	// Read in data into arrays of vectors
+	std::vector<Vector<number_type>> data_formated(data.colsize());
+	read_data(filename, data_formated, skip_rows);
+
+	// Copy content of array of vectors into matrix
+	for (size_type j = 0; j < data.colsize(); ++j)
+	{
+		for (size_type i = 0; i < data.rowsize(); ++i)
+		{
+			data(i,j) = (data_formated[j])[i];
+		}
 	}
 
 }
