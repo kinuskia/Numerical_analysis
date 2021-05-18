@@ -6,6 +6,7 @@
 #include <cmath>
 #include <algorithm>
 #include "storage.hpp"
+#include "to_file.hpp"
 
 
 
@@ -71,16 +72,18 @@ public:
 	, n_param_(model.n_parameters())
 	, n_data_(x[0].size())
 	, d_of_freedom_(x[0].size()-model.n_parameters())
-	, maxit_(10*model.n_parameters()+10)
-	, lambda0_(1.e-2)
-	, scale_up_(11.)
-	, scale_down_(9.)
-	, limit_gradient_(1.e-12)
-	, limit_param_(1.e-12)
-	, eps_lm_(1.e-1)
+	, maxit_(5*model.n_parameters()+10) // Recommended: 10*model.n_parameters()+10
+	//, maxit_(model.n_parameters())
+	, lambda0_(1.e-2) // Recommended: 1.e-2
+	, scale_up_(11.) // Recommended: 11
+	, scale_down_(9.) // Recommended: 9
+	, limit_gradient_(1.e-12) // Recommended: 1e-12
+	, limit_param_(1.e-12) // Recommended: 1e-12
+	, eps_lm_(1.e-4) // Recommended: 1e-1
 	, converged_(false)
 	{
 		transpose_x_data();
+		set_sigma();
 	}
 
 	// Reset LM object
@@ -139,6 +142,7 @@ public:
 		position_forward[parameter_index] += stepsize;
 		Vector<number_type> position_backward = q;
 		position_backward[parameter_index] -= stepsize;
+		// std::cout << model_.f(x, position_forward) << " " << model_.f(x, position_backward) << "\n";
 		return (model_.f(x, position_forward)-model_.f(x, position_backward))/2.0/stepsize;
 	}
 
@@ -187,14 +191,26 @@ public:
 	// compute Jacobian for set of parameter values q
 	void set_J(const Vector<number_type> & q)
 	{
+		//std::cout << "Computing Jacobian...\n";
 		assert(q.size() == n_param_);
 		for (size_type i = 0; i < n_data_; ++i)
 		{
 			for (size_type j = 0; j < n_param_; ++j)
 			{
-				J_(i, j) = first_derivative_unbiased(x_[i], q, j, 1e-5);
+				number_type stepsize = 1.e-5;
+				if ((x_[i])[j]*1.e-5 > stepsize)
+				{
+					stepsize *= (x_[i])[j];
+				}
+				J_(i, j) = first_derivative_unbiased(x_[i], q, j, stepsize);
+
+
+				//if ((i%(n_data_/10) == 0)&&(j==0))
+				//	std::cout << "Progress: " << round(100.*i/n_data_) << "%\n";
+
 			}
 		}
+		//std::cout << "Jacobian has been computed.\n";
 	}
 
 	// compute entries of sigma2 vector where sigma^2 = dy^2 + (df/dx)^2*dx^2
@@ -210,6 +226,15 @@ public:
 					sigma2_[i] += ( (dx_[i])[j] * (dx_[i])[j] * derivative_x_unbiased(x_[i], q, j, 1.e-5) * derivative_x_unbiased(x_[i], q, j, 1.e-5) );
 				}
 			}
+		}
+	}
+
+	// compute entries of sigma2 vector where sigma^2 = dy^2 (overload)
+	void set_sigma()
+	{
+		for (size_type i = 0; i < n_data_; ++i)
+		{
+			sigma2_[i] = dy_[i]*dy_[i];
 		}
 	}
 
@@ -284,8 +309,9 @@ public:
 		y = diagonals*h;
 		y *= lambda;
 		y += residual;
-		result = (chi2(q) - chi2(q+h))/inner_product(h, y);
+		result = (chi2_red(q) - chi2_red(q+h))/inner_product(h, y);
 
+		std::cout  << "Inner product: " << inner_product(h, y) << " " << "Metric: " << result << "\n";
 
 		return result;
 	}
@@ -354,11 +380,12 @@ public:
 			// {
 			// 	std::cout << i << " : " << q[i] << "\n";
 			// }
-			//std::cout << "chi2/d.o.f = " << chi2_red(q) << "\n";
+			std::cout << i << ": " << "chi2/d.o.f = " << chi2_red(q) << " lambda: " << lambda << "\n";
 			// std::cout << non_invertible << "\n";
 			// Fill entries of coefficient matrix and save diagonal entries of JtWJ
 			Vector<number_type> diagonals(n_param_);
 			fill_left(A, q, lambda, diagonals);
+			// A.print();
 
 			// Fill entries of residual vector and make a copy
 			fill_right(r, q);
@@ -368,6 +395,7 @@ public:
 			row_equilibrate(A, s, non_invertible); // equilibrate rows
 			if (non_invertible) // break in case of a non-invertible matrix
 			{
+				std::cout << "Not invertible! \n";
 				converged_ = false;
 				break;
 			}
@@ -382,6 +410,7 @@ public:
 			// check whether solution sufficiently decreases chi2
 			number_type metric = check_improvement(q, z, lambda, diagonals, r_copy);
 			//std::cout << "Metric: " <<  metric << "\n";
+
 			if (metric > eps_lm_)
 			{
 				q += z;
@@ -391,16 +420,21 @@ public:
 			{
 				lambda = std::min(lambda*scale_up_, 1e7);
 			}
+			
+
+			
+			
 
 			// Recomputing jacobian
 			set_J(q); 
 			set_sigma(q);
 
 
+
 			// check convergence
 			if (has_converged(q, z, r_copy))
 			{
-				//std::cout << "Converged! \n";
+				std::cout << "Converged! \n";
 				converged_ = true;
 				break;
 			}
@@ -409,8 +443,10 @@ public:
 
 	}
 
+
+
 	// find best-fit result by drawing n random starting points from a given region
-	// return ratio of number of starting points having led to the best-fit result
+	// return ratio of number of starting points that led to the best-fit result
 	number_type find_best_fit(Vector<number_type> & popt, const Vector<number_type> & lower_range, const Vector<number_type> & upper_range, size_type n)
 	{
 		assert(popt.size() == n_param_);
@@ -423,6 +459,8 @@ public:
 		size_type counter_best_fit = 0;
 		number_type tol = 1.e-8;
 
+		Storage<number_type> popts(popt, 1); // Save popt and chi2/dof for each starting point
+
 		for (size_type i = 0; i < n; ++i)
 		{
 			// Draw random starting point
@@ -430,6 +468,13 @@ public:
 
 			// minimize from that point
 			solve(popt);
+			
+			
+
+			for (size_type i = 0; i < popt.size(); ++i)
+			{
+				std::cout << i << " : " << popt[i] << "\n";
+			}
 
 	
 
@@ -448,6 +493,12 @@ public:
 				counter_best_fit++;
 			}
 
+			// Save in storage
+			popts.read_in(popt);
+			popts.read_in(chi2_current);
+
+
+
 		}
 
 		// save result
@@ -456,6 +507,8 @@ public:
 			best_fit_ = popt_temp;
 			popt = popt_temp;
 		}
+
+		popts.write("popts.txt", false);
 
 		return 1.*counter_best_fit/n;
 

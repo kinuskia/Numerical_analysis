@@ -13,7 +13,7 @@ n_bins = 128
 
 
 plt.figure(1)
-plt.hist(U[keep], n_bins, normed = True) 
+plt.hist(U[keep], n_bins) 
 plt.xlabel("$\\chi^2_\\mathrm{red}$")
 plt.ylabel("density")
 plt.savefig("plots/hist_U.pdf", format = "pdf", bbox_inches = "tight")
@@ -49,7 +49,7 @@ for item in parameters:
 	counter_fig = counter_fig + 1
 	
 	plt.figure(counter_fig)
-	plt.hist(item, n_bins, normed = True)
+	plt.hist(item, n_bins)
 	plt.xlabel(lab1)
 	plt.ylabel("density")
 	filename2 = "plots/hist_popt" + str(counter_param) + ".pdf"

@@ -49,7 +49,7 @@ void read_data(std::string filename, std::vector<Vector<number_type>> & data, si
 		for (int i = 0; i < line.length(); ++i)
 		{
 			// Detect beginning of a number
-			bool is_number = std::isalnum(line[i]) || (line[i] == '.') || (line[i] == '-');
+			bool is_number = std::isalnum(line[i]) || (line[i] == '.') || (line[i] == '-') || (line[i]=='e') ||(line[i] == '+');
 			bool is_seperator = (line[i] == ' ' && line[i] == '\t');
 			if (is_number) // Detect beginning of a number
 			{

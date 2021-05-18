@@ -3,10 +3,10 @@
 #include <vector>
 #include <string>
 #include "model.hpp"
-#include "../auxiliary_files/vector.hpp"
 #include "../auxiliary_files/read_data.hpp"
+#include "../auxiliary_files/vector.hpp"
 #include "../auxiliary_files/write_scripts.hpp"
-#include "../auxiliary_files/hmc.hpp"
+#include "../auxiliary_files/hmc_fit.hpp"
 #include <fstream>
 
 
@@ -16,13 +16,14 @@ int main (int argc, char* argv[])
 	typedef std::size_t size_type;
 
 	// Initialize empty vectors for experimental input
-	Vector<number_type> t(0);
-	Vector<number_type> y(0);
-	Vector<number_type> dy(0);
+	std::vector<Vector<number_type>> experiment(3);
 	
 
-	// Read in measured data, save it to vectors t, y, dy, skip 0 rows
-	read_data("experimental_data/measurements.dat", t, y, dy, 0);
+	// Read in measured data
+	read_data("experimental_data/measurements.txt", experiment);
+	Vector<number_type> t(experiment[0]);
+	Vector<number_type> y(experiment[1]);
+	Vector<number_type> dy(experiment[2]);
 
 
 	// Set up fitting model
@@ -63,13 +64,13 @@ int main (int argc, char* argv[])
 
 
 	//initialize HMC object
-	HMC<number_type> sampler(gaussian, range_min, range_max, c_lengths, 3e-3, 90, 130, 1e0);
+	HMC<number_type> sampler(gaussian, range_min, range_max, c_lengths, 3e-3, 90, 130, 1e1);
 	
 	
 
 	/* PRELIMINARY RUN TOOLS */
 	
-	//sampler.tune_parameters();
+	sampler.tune_parameters();
 
 
 	/* 	
@@ -95,7 +96,7 @@ int main (int argc, char* argv[])
 
 	// Draw random vector from search region as starting point and generate Markov chain
 	fill_from_region(popt, range_min, range_max);
-	sampler.walk(1e4, 60*30, popt, 10);
+	//sampler.walk(1e4, 60*30, popt, 10);
 
 	
 

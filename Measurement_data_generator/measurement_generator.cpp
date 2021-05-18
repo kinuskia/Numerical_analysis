@@ -8,25 +8,31 @@
 template<typename number_type>
 number_type f(Vector<number_type> x, Vector<number_type> popt)
 {
-	return popt[0] * exp(-(x[0]-popt[1])*(x[0]-popt[1])/2/popt[2]/popt[2]);
+	return popt[0] * exp(-(x[0]-popt[1])*(x[0]-popt[1])/2/popt[2]/popt[2]-(x[1]-popt[3])*(x[1]-popt[3])/2/popt[4]/popt[4]);
 }
 
 
 int main ()
 {
-	std::size_t n_data = 70;
-	std::size_t x_dim = 1;
-	Vector<double> popt(3);
-	popt[0] = 4;
-	popt[1] = 5;
-	popt[2] = 1;
+	std::size_t n_data = 170;
+	std::size_t x_dim = 2;
+	Vector<double> popt(5);
+	popt[0] = 1;
+	popt[1] = 2;
+	popt[2] = 0.5;
+	popt[3] = 4;
+	popt[4] = 1.7;
 
 	// x-uncertainty?
 	bool x_uncertainty = false;
 
 
-	Vector<double> lower_x(1, 0);
-	Vector<double> upper_x(1, 10);
+	Vector<double> lower_x(2);
+	Vector<double> upper_x(2);
+	lower_x[0] = 0.5;
+	upper_x[0] = 3.5;
+	lower_x[1] = -1.1;
+	upper_x[1] = 9.1;
 
 
 	std::random_device rd;
@@ -40,8 +46,8 @@ int main ()
 	double rel = 0.02;
 	double abs = 0.02;
 
-	double rel_x = 0.02;
-	double abs_x = 0.02;
+	double rel_x = 0.002;
+	double abs_x = 0.002;
 
 	// Create (theoretical) x-values
 	for (std::size_t i = 0; i < n_data; ++i)

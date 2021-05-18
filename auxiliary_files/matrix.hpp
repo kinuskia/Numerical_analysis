@@ -286,6 +286,19 @@ public:
 		return y;
 	}
 
+	// Print Matrix
+	void print() const
+	{
+		for (size_type i = 0; i < this->rowsize(); ++i)
+		{
+			for (size_type j = 0; j < this->colsize(); ++j)
+			{
+				std::cout << (*this)(i,j) << " ";
+			}
+			std::cout << "\n";
+		}
+	}
+
 
 };
 

@@ -202,7 +202,16 @@ public:
 		std::uniform_real_distribution<> dis_unif(0, 1);
 		bool accepted = dis_unif(gen) < exp(-H_change);
 		
+		std::cout << "U: " << current_U  << " " << proposed_U << " K: " << current_K  << " " << proposed_K << " H_change: " <<  H_change << " accepted: " << accepted << "\n";
 		
+		// if (true)
+		// {
+		// 	for (size_type i = 0; i < q.size(); ++i)
+		// 	{
+		// 		std::cout << i << " " << q[i] << "\n";
+		// 	}
+		// }
+
 		accepted = accepted && model_.constraints_respected(q); // automatical rejection if contraints not respected
 		if (accepted)
 		{
@@ -479,7 +488,7 @@ public:
 	{
 		assert(initial.size() == model_.n_parameters());
 		bool permitted_initial_found = false;
-		number_type counter_constraints = 0;
+		size_type counter_constraints = 0;
 		while (!permitted_initial_found)
 		{
 			fill_from_region(initial, range_min_, range_max_);
@@ -644,7 +653,7 @@ public:
 				std::cin >> stepsize_;
 				n_steps_min_ = 4;
 				n_steps_max_ = 5;
-				get_acceptance_rates(range_min_, range_max_, 50, 50, "preliminary_tools/acceptrates.txt");
+				get_acceptance_rates(range_min_, range_max_, 30, 10, "preliminary_tools/acceptrates.txt");
 				std::cout << "Enter \"repeat\" to set a new step size or go to next step (\"next\"), or back (\"back\"): \n";
 				std::cin >> user_input;
 				if (user_input == next)
@@ -671,7 +680,7 @@ public:
 				std::cout << "Set number of chains: ";
 				size_type n_chains;
 				std::cin >> n_chains;
-				get_acceptance_rates(range_min_, range_max_, n_chains, 50, "preliminary_tools/acceptrates.txt");
+				get_acceptance_rates(range_min_, range_max_, n_chains, 10, "preliminary_tools/acceptrates.txt");
 				std::cout << "Enter \"repeat\" to try a different range of Leapfrog steps, \"next\" if you want to go the next step, or \"back\" to get to the previous step ";
 				std::cin >> user_input;
 				if (user_input == repeat)
@@ -895,12 +904,14 @@ public:
 	{
 		std::vector<number_type> acceptance_rates(0);
 
+		std::cout << "Fetching acceptance rates...\n";
 		for (size_type i = 0; i<nb_positions; ++i)
 		{
+			std::cout << i << "/" << nb_positions << "\n";
 			// Draw random but permitted position from the search region
 			Vector<number_type> popt(range_min.size());
 			find_start(popt);
-			
+			std::cout << potential(popt) << "\n";
 			// do some HMC steps and save acceptance rate
 			counter_ = 0;
 			counter_accepted_ = 0;

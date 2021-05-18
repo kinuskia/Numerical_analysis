@@ -53,21 +53,21 @@ int main ()
 	Vector<number_type> popt(fitting_model.n_parameters());
 
 	// Calculate fitting result
-	success_ratio = minimizer.find_best_fit(popt, range_min, range_max, 1e2);
+	success_ratio = minimizer.find_best_fit(popt, range_min, range_max, 1e0);
 	std::cout << "Success ratio: " << success_ratio << "\n";
 
-	Vector<number_type> uncertainty(popt.size());
-	Vector<number_type> uncertainty_err(popt.size());
-	minimizer.get_fit_uncertainty("fit_samples.txt", 5e3, uncertainty, uncertainty_err);
-	std::cout << "Fitting result: \n";
-	for (size_type i = 0; i < popt.size(); ++i)
-	{
-		std::cout << popt[i] << " +/- " << uncertainty[i]  << "\n";
-	}
-	uncertainty_err = uncertainty_err / uncertainty;
-	std::cout << "Maximal relative uncertainty error: " << *std::max_element(uncertainty_err.begin(), uncertainty_err.end()) << "\n";
+	// Vector<number_type> uncertainty(popt.size());
+	// Vector<number_type> uncertainty_err(popt.size());
+	// minimizer.get_fit_uncertainty("fit_samples.txt", 5e3, uncertainty, uncertainty_err);
+	// std::cout << "Fitting result: \n";
+	// for (size_type i = 0; i < popt.size(); ++i)
+	// {
+	// 	std::cout << popt[i] << " +/- " << uncertainty[i]  << "\n";
+	// }
+	// uncertainty_err = uncertainty_err / uncertainty;
+	// std::cout << "Maximal relative uncertainty error: " << *std::max_element(uncertainty_err.begin(), uncertainty_err.end()) << "\n";
 
-	std::cout << "chi2/d.o.f = " << minimizer.chi2_red(popt) << "\n";
+	// std::cout << "chi2/d.o.f = " << minimizer.chi2_red(popt) << "\n";
 
 
 
